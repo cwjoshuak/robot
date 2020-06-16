@@ -58,7 +58,7 @@ async def on_message(message):
         aliases = db.aliases
         contents = message.content.split(' ')
         result = aliases.insert_one({'_id': contents[1].upper(), 'original': ' '.join(contents[2:]).upper()})
-        await message.channel.send(f'Aliased {' '.join(contents[2:]).upper()} as {result.inserted_id}')
+        await message.channel.send(f'Aliased {" ".join(contents[2:]).upper()} as {result.inserted_id}')
 
     if message.content.startswith('.listaliases'):
         aliases = db.aliases
