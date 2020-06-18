@@ -41,7 +41,7 @@ class Course:
         if self.repeatability != '':
             embed.add_field(name="Course Repeatability", value=self.repeatability, inline=False)
         if self.ge_req != '':
-            embed.add_field(name="Satifies GE Requirement", value=self.ge_req, inline=False)
+            embed.add_field(name="Satisfies GE Requirement", value=self.ge_req, inline=False)
         return embed
     def __str__(self):
         return \
