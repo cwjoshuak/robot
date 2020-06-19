@@ -64,10 +64,9 @@ class UCI(commands.Cog, name='UCI Information'):
 
         school_related = ['[DegreeWorks](https://www.reg.uci.edu/access/student/degreeworks/?seg=U)', '[StudyList](https://www.reg.uci.edu/access/student/studylist/?seg=U)', '[Unofficial Transcript](https://www.reg.uci.edu/access/student/transcript/?seg=U)' ]
         embed.add_field(name=':notepad_spiral: Class Planning', value='\n'.join(class_planning))
-        embed.add_field(name=':UCI: StudentAccess', value='\n'.join(school_related))
+        embed.add_field(name='<:UCI:721633549429768213> StudentAccess', value='\n'.join(school_related))
 
         await ctx.message.channel.send(embed=embed)
-
 
 def setup(bot):
     bot.add_cog(UCI(bot))
