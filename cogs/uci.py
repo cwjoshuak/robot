@@ -1,8 +1,19 @@
 import discord
 from discord.ext import commands
+import os
 
+import os,sys,inspect
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 from course import Course
 import time
+
+from pymongo import MongoClient
+from dotenv import load_dotenv
+load_dotenv()
+
+MONGO_PW = os.getenv("MONGO_PW")
 
 class UCI(commands.Cog, name='UCI Information'):
     def __init__(self, bot):
@@ -13,7 +24,8 @@ class UCI(commands.Cog, name='UCI Information'):
         """Displays UCI Course Info.
         Usage: `.cinfo INF 133`"""
         start_time = time.time()
-
+        mongo_courses = self.bot.mongo_courses
+        db = self.bot.db
         whole_course = [i.upper() for i in list(args) if i != '']
 
         if 2 <= len(whole_course) <= 3:
@@ -44,6 +56,7 @@ class UCI(commands.Cog, name='UCI Information'):
     @commands.command(hidden=True)
     @commands.is_owner()
     async def addalias(self, ctx, *args):
+        db = self.bot.db
         aliases = db.aliases
         contents = list(args)
         result = aliases.insert_one({'_id': contents[0].upper(), 'original': ' '.join(contents[1:]).upper()})
@@ -52,6 +65,7 @@ class UCI(commands.Cog, name='UCI Information'):
     @commands.command(hidden=True)
     @commands.is_owner()
     async def listaliases(self, ctx, *args):
+        db = self.bot.db
         aliases = db.aliases
         await ctx.message.channel.send('```' + ''.join(str(list(aliases.find()))) + '```')
 
@@ -69,4 +83,7 @@ class UCI(commands.Cog, name='UCI Information'):
         await ctx.message.channel.send(embed=embed)
 
 def setup(bot):
+    mongo_client = MongoClient(f"mongodb+srv://root:{MONGO_PW}@course-data-f6kx1.mongodb.net/coursedb?retryWrites=true&w=majority")
+    bot.db = mongo_client.coursedb
+    bot.mongo_courses = bot.db.courses
     bot.add_cog(UCI(bot))
