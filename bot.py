@@ -46,7 +46,7 @@ async def on_ready():
 #         #724569627434418197
 #     await bot.process_commands(message)
 
- async def on_member_join(member: discord.Member):
+async def on_member_join(member: discord.Member):
     if member.guild.id == 691084469762916363:
         desc = \
         f"""
