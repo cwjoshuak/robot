@@ -161,7 +161,6 @@ class UCI(commands.Cog, name='UCI Information'):
                 await reaction.message.clear_reactions()
                 await reaction.message.add_reaction('✅')
                 await reaction.message.add_reaction('🚫')
-                await reaction.message.add_reaction('📨')
 
     @commands.Cog.listener()       
     async def on_member_join(member: discord.Member):
