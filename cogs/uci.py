@@ -150,11 +150,11 @@ class UCI(commands.Cog, name='UCI Information'):
             if reaction.emoji == '✅':
                 embed = reaction.message.embeds[0]
                 embed.title = embedTitleFormat
-                reacted_users = await reaction.users().flatten()
-                #if len(reacted_users) < 2:
-                await public_confession_channel.send(embed=embed)
                 await reaction.message.edit(content=f'Accepted by {user.name}\n{reaction.message.content}')
-                await reaction.message.add_reaction('📨')
+                reacted_users = await reaction.users().flatten()
+                if reaction.count < 3:
+                    await public_confession_channel.send(embed=embed)
+                    await reaction.message.add_reaction('📨')
             elif reaction.emoji == '🚫':
                 await reaction.message.edit(content=f'Rejected by {user.name}\n{reaction.message.content}')
                 await reaction.message.add_reaction('↩️')
