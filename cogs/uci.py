@@ -124,7 +124,7 @@ class UCI(commands.Cog, name='UCI Information'):
         utcmoment = utcmoment_naive.replace(tzinfo=pytz.utc)
         localDatetime = utcmoment.astimezone(pytz.timezone('America/Los_Angeles'))
 
-        embedTitleFormat = '%a #1'
+        embedTitleFormat = localDatetime.strftime('%a #1')
 
         last_message = await public_confession_channel.history(limit=1).flatten()
 
@@ -132,13 +132,12 @@ class UCI(commands.Cog, name='UCI Information'):
             try:
                 next_num = int(last_message[0].embeds[0].title.split('#')[1]) + 1
                 embedTitleFormat = localDatetime.strftime(f'%a #{next_num}')
-            except ValueError:
+                last_message_day = last_message[0].embeds[0].title.split(' ')[0]
+                if last_message_day != embedTitleFormat.split(' ')[0]:
+                    embedTitleFormat = localDatetime.strftime('%a #1')
+            except:
                 print('failed')
-                pass
-        last_message_day = last_message[0].embeds[0].title.split(' ')[0]
-        
-        if last_message_day != embedTitleFormat.split(' ')[0]:
-            embedTitleFormat = localDatetime.strftime('%a #1')
+           
         return embedTitleFormat
 
     @commands.Cog.listener()
