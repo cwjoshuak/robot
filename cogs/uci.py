@@ -99,11 +99,11 @@ class UCI(commands.Cog, name='UCI Information'):
             mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
             
             await message.add_reaction('👍')
-            await message.channel.send('React with 👍 in 10s if you want to send this confession.')
+            await message.channel.send('React with 👍 in 30s if you want to send this confession.')
             def check(reaction, user):
                 return user == message.author and str(reaction.emoji) == '👍' and reaction.message.id == message.id
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
             except asyncio.TimeoutError:
                 await message.remove_reaction('👍', self.bot.user)
                 await message.add_reaction('🚫')
