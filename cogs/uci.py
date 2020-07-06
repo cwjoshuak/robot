@@ -11,11 +11,17 @@ sys.path.insert(0, parent_dir)
 from course import Course
 import time
 
+from datetime import datetime
+import pytz
+import asyncio
+
 from pymongo import MongoClient
 from dotenv import load_dotenv
 load_dotenv()
 
 MONGO_PW = os.getenv("MONGO_PW")
+MOD_CONFESSIONS_CHANNEL = int(os.getenv("MOD_CONFESSIONS_CHANNEL"))
+PUBLIC_CONFESSIONS_CHANNEL = int(os.getenv("PUBLIC_CONFESSIONS_CHANNEL"))
 
 class UCI(commands.Cog, name='UCI Information'):
     def __init__(self, bot):
@@ -83,6 +89,112 @@ class UCI(commands.Cog, name='UCI Information'):
         embed.add_field(name='<:UCI:721633549429768213> StudentAccess', value='\n'.join(school_related))
 
         await ctx.message.channel.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        msg_list = message.clean_content.split(' ')
+        first_word = msg_list[0]
+        if type(message.channel) is discord.DMChannel and first_word.lower() == 'confess':
+            
+            mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
+            
+            await message.add_reaction('👍')
+            await message.channel.send('React with 👍 in 10s if you want to send this confession.')
+            def check(reaction, user):
+                return user == message.author and str(reaction.emoji) == '👍' and reaction.message.id == message.id
+            try:
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=10.0, check=check)
+            except asyncio.TimeoutError:
+                await message.remove_reaction('👍', self.bot.user)
+                await message.add_reaction('🚫')
+            else:
+                await reaction.message.add_reaction('📨')
+                confession = ' '.join(message.clean_content.split(' ')[1:])
+                embed = discord.Embed(description=confession, color=0x7bdee3)
+                await mod_confession_channel.send(embed=embed)
+                last_message = await mod_confession_channel.history(limit=1).flatten()
+                await last_message[0].add_reaction('✅')
+                await last_message[0].add_reaction('🚫')
+    
+    async def confessionTitleFormat(self):
+        mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
+        public_confession_channel = self.bot.get_channel(PUBLIC_CONFESSIONS_CHANNEL)
+
+        utcmoment_naive = datetime.utcnow()
+        utcmoment = utcmoment_naive.replace(tzinfo=pytz.utc)
+        localDatetime = utcmoment.astimezone(pytz.timezone('America/Los_Angeles'))
+
+        embedTitleFormat = '%a #1'
+
+        last_message = await public_confession_channel.history(limit=1).flatten()
+
+        if len(last_message) > 0:
+            try:
+                next_num = int(last_message[0].embeds[0].title.split('#')[1]) + 1
+                embedTitleFormat = localDatetime.strftime(f'%a #{next_num}')
+            except ValueError:
+                print('failed')
+                pass
+        last_message_day = last_message[0].embeds[0].title.split(' ')[0]
+        
+        if last_message_day != embedTitleFormat.split(' ')[0]:
+            embedTitleFormat = localDatetime.strftime('%a #1')
+        return embedTitleFormat
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction, user):
+        mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
+        public_confession_channel = self.bot.get_channel(PUBLIC_CONFESSIONS_CHANNEL)
+        if reaction.message.channel == mod_confession_channel and not user.bot:
+            embedTitleFormat = await self.confessionTitleFormat()
+            
+            if reaction.emoji == '✅':
+                embed = reaction.message.embeds[0]
+                embed.title = embedTitleFormat
+                await public_confession_channel.send(embed=embed)
+                await reaction.message.edit(content=f'Accepted by {user.name}\n{reaction.message.content}')
+                await reaction.message.add_reaction('📨')
+            elif reaction.emoji == '🚫':
+                await reaction.message.edit(content=f'Rejected by {user.name}\n{reaction.message.content}')
+                await reaction.message.add_reaction('↩️')
+            elif reaction.emoji == '↩️':
+                await reaction.message.edit(content=f'Reset by {user.name}\n{reaction.message.content}')
+                await reaction.message.clear_reactions()
+                await reaction.message.add_reaction('✅')
+                await reaction.message.add_reaction('🚫')
+                await reaction.message.add_reaction('📨')
+
+    @commands.Cog.listener()       
+    async def on_member_join(member: discord.Member):
+        if member.guild.id == 691084469762916363:
+            desc = \
+            f"""
+            Hello **{member.display_name}**, welcome to **UCI 2024**.
+
+            1. Read the server rules at <#703819922974834809>.
+
+            2. Assign yourself a major at <#691085894500745257> to get access to the rest of the server channels.
+
+            3. [Optional] Assign yourself a color at <#695439256675680295> and pronouns at <#714040116699463710>.
+
+            I can also list course information! Try typing `.cinfo WRITING 39A` into <#693660139684757524>.
+
+            Important links are listed below. Access them by typing `.links` into <#693587363141517403>.
+
+            Invite your friends! Share me: https://discord.gg/65X83xU
+            """
+
+            embed = discord.Embed(title='', description=desc, color=0x9400D3)
+            embed.add_field(name=':calendar_spiral: Academic Calendar', value='[Quarterly Academic Calendar 2020-21](https://www.reg.uci.edu/calendars/quarterly/2020-2021/quarterly20-21.html)', inline=False)
+
+            class_planning = ['[WebSoc - Schedule of Classes](https://www.reg.uci.edu/perl/WebSoc)', '[AntAlmanac](https://www.antalmanac.com)', '[ZotCourse](https://zotcourse.appspot.com/)', '[Zotistics](https://www.zotistics.com)']
+
+            school_related = ['[DegreeWorks](https://www.reg.uci.edu/access/student/degreeworks/?seg=U)', '[StudyList](https://www.reg.uci.edu/access/student/studylist/?seg=U)', '[Unofficial Transcript](https://www.reg.uci.edu/access/student/transcript/?seg=U)' ]
+            embed.add_field(name=':notepad_spiral: Class Planning', value='\n'.join(class_planning))
+            embed.add_field(name='<:UCI:721633549429768213> StudentAccess', value='\n'.join(school_related))
+
+            embed.set_footer(text='')
+            await member.send(embed=embed)
 
 def setup(bot):
     mongo_client = MongoClient(f"mongodb+srv://root:{MONGO_PW}@course-data-f6kx1.mongodb.net/coursedb?retryWrites=true&w=majority")
