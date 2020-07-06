@@ -140,29 +140,59 @@ class UCI(commands.Cog, name='UCI Information'):
            
         return embedTitleFormat
 
+    # @commands.Cog.listener()
+    # async def on_reaction_add(self, reaction, user):
+    #     mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
+    #     public_confession_channel = self.bot.get_channel(PUBLIC_CONFESSIONS_CHANNEL)
+    #     if reaction.message.channel == mod_confession_channel and not user.bot:
+    #         embedTitleFormat = await self.confessionTitleFormat()
+            
+    #         if reaction.emoji == '✅':
+    #             embed = reaction.message.embeds[0]
+    #             embed.title = embedTitleFormat
+    #             await reaction.message.edit(content=f'Accepted by {user.name}\n{reaction.message.content}')
+    #             reacted_users = await reaction.users().flatten()
+    #             if reaction.count < 3:
+    #                 await public_confession_channel.send(embed=embed)
+    #                 await reaction.message.add_reaction('📨')
+    #         elif reaction.emoji == '🚫':
+    #             await reaction.message.edit(content=f'Rejected by {user.name}\n{reaction.message.content}')
+    #             await reaction.message.add_reaction('↩️')
+    #         elif reaction.emoji == '↩️':
+    #             await reaction.message.edit(content=f'Reset by {user.name}\n{reaction.message.content}')
+    #             await reaction.message.clear_reactions()
+    #             await reaction.message.add_reaction('✅')
+    #             await reaction.message.add_reaction('🚫')
+
     @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
+    async def on_raw_reaction_add(self, payload):
         mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
         public_confession_channel = self.bot.get_channel(PUBLIC_CONFESSIONS_CHANNEL)
-        if reaction.message.channel == mod_confession_channel and not user.bot:
+        message_channel = self.bot.get_channel(payload.channel_id)
+        if message_channel == mod_confession_channel and self.bot.user.id != payload.user_id:
+            message = await message_channel.fetch_message(payload.message_id)
+            user = self.bot.get_user(payload.user_id)
             embedTitleFormat = await self.confessionTitleFormat()
             
-            if reaction.emoji == '✅':
-                embed = reaction.message.embeds[0]
+            if payload.emoji.name == '✅':
+                embed = message.embeds[0]
                 embed.title = embedTitleFormat
-                await reaction.message.edit(content=f'Accepted by {user.name}\n{reaction.message.content}')
-                reacted_users = await reaction.users().flatten()
-                if reaction.count < 3:
+                
+                await message.edit(content=f'Accepted by {user.name}\n{message.content}')
+                message_reaction = list(filter(lambda x: x.emoji == payload.emoji.name, message.reactions))
+
+                if len(message_reaction) > 0 and message_reaction[0].count < 3:
                     await public_confession_channel.send(embed=embed)
-                    await reaction.message.add_reaction('📨')
-            elif reaction.emoji == '🚫':
-                await reaction.message.edit(content=f'Rejected by {user.name}\n{reaction.message.content}')
-                await reaction.message.add_reaction('↩️')
-            elif reaction.emoji == '↩️':
-                await reaction.message.edit(content=f'Reset by {user.name}\n{reaction.message.content}')
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction('✅')
-                await reaction.message.add_reaction('🚫')
+                    await message.add_reaction('📨')
+            elif payload.emoji.name == '🚫':
+                await message.edit(content=f'Rejected by {user.name}\n{message.content}')
+                await message.add_reaction('↩️')
+            elif payload.emoji.name == '↩️':
+                await message.edit(content=f'Reset by {user.name}\n{message.content}')
+                await message.clear_reactions()
+                await message.add_reaction('✅')
+                await message.add_reaction('🚫')
+
 
     @commands.Cog.listener()       
     async def on_member_join(self, member: discord.Member):
