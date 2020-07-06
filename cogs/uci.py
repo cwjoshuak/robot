@@ -82,7 +82,7 @@ class UCI(commands.Cog, name='UCI Information'):
         embed = discord.Embed(title='Important Links', color=0x816E91)
         embed.add_field(name=':calendar_spiral: Academic Calendar', value='[Quarterly Academic Calendar 2020-21](https://www.reg.uci.edu/calendars/quarterly/2020-2021/quarterly20-21.html)', inline=False)
 
-        class_planning = ['[WebSoc - Schedule of Classes](https://www.reg.uci.edu/perl/WebSoc)', '[AntAlmanac](https://www.antalmanac.com)', '[ZotCourse](https://zotcourse.appspot.com/)', '[Zotistics](https://www.zotistics.com)']
+        class_planning = ['[WebSoc - Schedule of Classes](https://www.reg.uci.edu/perl/WebSoc)', '[AntAlmanac](https://antalmanac.com)', '[ZotCourse](https://zotcourse.appspot.com/)', '[Zotistics](https://www.zotistics.com)']
 
         school_related = ['[DegreeWorks](https://www.reg.uci.edu/access/student/degreeworks/?seg=U)', '[StudyList](https://www.reg.uci.edu/access/student/studylist/?seg=U)', '[Unofficial Transcript](https://www.reg.uci.edu/access/student/transcript/?seg=U)' ]
         embed.add_field(name=':notepad_spiral: Class Planning', value='\n'.join(class_planning))
@@ -150,9 +150,11 @@ class UCI(commands.Cog, name='UCI Information'):
             if reaction.emoji == '✅':
                 embed = reaction.message.embeds[0]
                 embed.title = embedTitleFormat
-                await public_confession_channel.send(embed=embed)
-                await reaction.message.edit(content=f'Accepted by {user.name}\n{reaction.message.content}')
-                await reaction.message.add_reaction('📨')
+                reacted_users = await reaction.users().flatten()
+                if len(reacted_users) < 2:
+                    await public_confession_channel.send(embed=embed)
+                    await reaction.message.edit(content=f'Accepted by {user.name}\n{reaction.message.content}')
+                    await reaction.message.add_reaction('📨')
             elif reaction.emoji == '🚫':
                 await reaction.message.edit(content=f'Rejected by {user.name}\n{reaction.message.content}')
                 await reaction.message.add_reaction('↩️')
@@ -185,7 +187,7 @@ class UCI(commands.Cog, name='UCI Information'):
             embed = discord.Embed(title='', description=desc, color=0x9400D3)
             embed.add_field(name=':calendar_spiral: Academic Calendar', value='[Quarterly Academic Calendar 2020-21](https://www.reg.uci.edu/calendars/quarterly/2020-2021/quarterly20-21.html)', inline=False)
 
-            class_planning = ['[WebSoc - Schedule of Classes](https://www.reg.uci.edu/perl/WebSoc)', '[AntAlmanac](https://www.antalmanac.com)', '[ZotCourse](https://zotcourse.appspot.com/)', '[Zotistics](https://www.zotistics.com)']
+            class_planning = ['[WebSoc - Schedule of Classes](https://www.reg.uci.edu/perl/WebSoc)', '[AntAlmanac](https://antalmanac.com)', '[ZotCourse](https://zotcourse.appspot.com/)', '[Zotistics](https://www.zotistics.com)']
 
             school_related = ['[DegreeWorks](https://www.reg.uci.edu/access/student/degreeworks/?seg=U)', '[StudyList](https://www.reg.uci.edu/access/student/studylist/?seg=U)', '[Unofficial Transcript](https://www.reg.uci.edu/access/student/transcript/?seg=U)' ]
             embed.add_field(name=':notepad_spiral: Class Planning', value='\n'.join(class_planning))
