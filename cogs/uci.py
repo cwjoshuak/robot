@@ -10,7 +10,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 from course import Course
 import time
-
+import re
 from datetime import datetime
 import pytz
 import asyncio
@@ -197,7 +197,11 @@ class UCI(commands.Cog, name='UCI Information'):
                 embed = message.embeds[0]
                 embedTitleFormat = await self.confessionTitleFormat(cafe_question_channel)
                 embed.title = embedTitleFormat
-                
+                temp_msg = embed.description
+                pattern = re.compile(r"(?<=\|)(.*)")
+                matches = pattern.search(temp_msg)
+                if matches is not None:
+                    embed.description = matches.group(0).strip()
                 await message.edit(content=f'Accepted by {user.name}\n{message.content}')
                 message_reaction = list(filter(lambda x: x.emoji == payload.emoji.name, message.reactions))
 
