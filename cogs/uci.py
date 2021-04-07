@@ -22,6 +22,7 @@ load_dotenv()
 MONGO_PW = os.getenv("MONGO_PW")
 MOD_CONFESSIONS_CHANNEL = int(os.getenv("MOD_CONFESSIONS_CHANNEL"))
 PUBLIC_CONFESSIONS_CHANNEL = int(os.getenv("PUBLIC_CONFESSIONS_CHANNEL"))
+CAFE_QUESTIONS_CHANNEL = int(os.getenv("CAFE_QUESTIONS_CHANNEL"))
 
 class UCI(commands.Cog, name='UCI Information'):
     def __init__(self, bot):
@@ -114,11 +115,13 @@ class UCI(commands.Cog, name='UCI Information'):
                 await mod_confession_channel.send(embed=embed)
                 last_message = await mod_confession_channel.history(limit=1).flatten()
                 await last_message[0].add_reaction('✅')
+                await last_message[0].add_reaction('🍀')
                 await last_message[0].add_reaction('🚫')
+                
     
-    async def confessionTitleFormat(self):
-        mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
+    async def confessionTitleFormat(self, channelID):
         public_confession_channel = self.bot.get_channel(PUBLIC_CONFESSIONS_CHANNEL)
+        cafe_question_channel = self.bot.get_channel(CAFE_QUESTIONS_CHANNEL)
 
         utcmoment_naive = datetime.utcnow()
         utcmoment = utcmoment_naive.replace(tzinfo=pytz.utc)
@@ -126,7 +129,11 @@ class UCI(commands.Cog, name='UCI Information'):
 
         embedTitleFormat = localDatetime.strftime('%a #1')
 
-        last_message = await public_confession_channel.history(limit=1).flatten()
+        last_message = ''
+        if channelID == public_confession_channel:
+            last_message = await public_confession_channel.history(limit=1).flatten()
+        elif channelID == cafe_question_channel:
+            last_message = await cafe_question_channel.history(limit=1).flatten()
 
         if len(last_message) > 0:
             try:
@@ -168,14 +175,16 @@ class UCI(commands.Cog, name='UCI Information'):
     async def on_raw_reaction_add(self, payload):
         mod_confession_channel = self.bot.get_channel(MOD_CONFESSIONS_CHANNEL)
         public_confession_channel = self.bot.get_channel(PUBLIC_CONFESSIONS_CHANNEL)
+        cafe_question_channel = self.bot.get_channel(CAFE_QUESTIONS_CHANNEL)
+
         message_channel = self.bot.get_channel(payload.channel_id)
         if message_channel == mod_confession_channel and self.bot.user.id != payload.user_id:
             message = await message_channel.fetch_message(payload.message_id)
             user = self.bot.get_user(payload.user_id)
-            embedTitleFormat = await self.confessionTitleFormat()
             
             if payload.emoji.name == '✅':
                 embed = message.embeds[0]
+                embedTitleFormat = await self.confessionTitleFormat(public_confession_channel)
                 embed.title = embedTitleFormat
                 
                 await message.edit(content=f'Accepted by {user.name}\n{message.content}')
@@ -184,6 +193,17 @@ class UCI(commands.Cog, name='UCI Information'):
                 if len(message_reaction) > 0 and message_reaction[0].count < 3:
                     await public_confession_channel.send(embed=embed)
                     await message.add_reaction('📨')
+            elif payload.emoji.name == '🍀':
+                embed = message.embeds[0]
+                embedTitleFormat = await self.confessionTitleFormat(cafe_question_channel)
+                embed.title = embedTitleFormat
+                
+                await message.edit(content=f'Accepted by {user.name}\n{message.content}')
+                message_reaction = list(filter(lambda x: x.emoji == payload.emoji.name, message.reactions))
+
+                if len(message_reaction) > 0 and message_reaction[0].count < 3:
+                    await cafe_question_channel.send(embed=embed)
+                    await message.add_reaction('📨')
             elif payload.emoji.name == '🚫':
                 await message.edit(content=f'Rejected by {user.name}\n{message.content}')
                 await message.add_reaction('↩️')
@@ -191,7 +211,9 @@ class UCI(commands.Cog, name='UCI Information'):
                 await message.edit(content=f'Reset by {user.name}\n{message.content}')
                 await message.clear_reactions()
                 await message.add_reaction('✅')
+                await message.add_reaction('🍀')
                 await message.add_reaction('🚫')
+                
 
 
     @commands.Cog.listener()       
@@ -203,15 +225,15 @@ class UCI(commands.Cog, name='UCI Information'):
 
             1. Read the server rules at <#703819922974834809>.
 
-            2. Assign yourself a major at <#691085894500745257> to get access to the rest of the server channels.
+            2. Verify yourself at <#755315885131956274> to get access to the rest of the server channels.
 
-            3. [Optional] Assign yourself a color at <#695439256675680295> and pronouns at <#714040116699463710>.
+            3. [Optional] Assign yourself a major / color at <#691085894500745257> and pronouns at <#714040116699463710>.
 
             I can also list course information! Try typing `.cinfo WRITING 39A` into <#693660139684757524>.
 
             Important links are listed below. Access them by typing `.links` into <#693587363141517403>.
 
-            Invite your friends! Share me: https://discord.gg/65X83xU
+            Invite your friends! Share me: https://discord.gg/uci24
             """
 
             embed = discord.Embed(title='', description=desc, color=0x9400D3)
