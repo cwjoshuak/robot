@@ -9,6 +9,7 @@ current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfra
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 from course import Course
+from cryptography.fernet import Fernet
 import time
 import re
 from datetime import datetime
@@ -23,11 +24,12 @@ MONGO_PW = os.getenv("MONGO_PW")
 MOD_CONFESSIONS_CHANNEL = int(os.getenv("MOD_CONFESSIONS_CHANNEL"))
 PUBLIC_CONFESSIONS_CHANNEL = int(os.getenv("PUBLIC_CONFESSIONS_CHANNEL"))
 CAFE_QUESTIONS_CHANNEL = int(os.getenv("CAFE_QUESTIONS_CHANNEL"))
+FERNET_KEY = os.getenv("FERNET_KEY")
 
 class UCI(commands.Cog, name='UCI Information'):
     def __init__(self, bot):
         self.bot = bot
-        
+        self.fernet = Fernet(FERNET_KEY)
     @commands.command()
     async def cinfo(self, ctx, *args):
         """Displays UCI Course Info.
@@ -112,6 +114,9 @@ class UCI(commands.Cog, name='UCI Information'):
                 await reaction.message.add_reaction('📨')
                 confession = ' '.join(message.clean_content.split(' ')[1:])
                 embed = discord.Embed(description=confession, color=0x7bdee3)
+                coded_id = self.fernet.encrypt(str.encode(f'{user.id}'))
+                coded_id = coded_id.decode('ascii')
+                embed.set_footer(text=f'{coded_id}')
                 await mod_confession_channel.send(embed=embed)
                 last_message = await mod_confession_channel.history(limit=1).flatten()
                 await last_message[0].add_reaction('✅')
@@ -186,7 +191,7 @@ class UCI(commands.Cog, name='UCI Information'):
                 embed = message.embeds[0]
                 embedTitleFormat = await self.confessionTitleFormat(public_confession_channel)
                 embed.title = embedTitleFormat
-                
+                embed.set_footer(text='')
                 await message.edit(content=f'Accepted by {user.name}\n{message.content}')
                 message_reaction = list(filter(lambda x: x.emoji == payload.emoji.name, message.reactions))
 
@@ -197,6 +202,7 @@ class UCI(commands.Cog, name='UCI Information'):
                 embed = message.embeds[0]
                 embedTitleFormat = await self.confessionTitleFormat(cafe_question_channel)
                 embed.title = embedTitleFormat
+                embed.set_footer(text='')
                 temp_msg = embed.description
                 pattern = re.compile(r"(?<=\|)(.*)")
                 matches = pattern.search(temp_msg)
