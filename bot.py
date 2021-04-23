@@ -23,6 +23,7 @@ DISCORD_API_KEY = os.getenv("DISCORD_API_KEY")
 bot = commands.Bot(command_prefix='.')
 
 initial_extensions = ['cogs.uci',
+                'cogs.urbandictionary',
                       'cogs.owner']
 
 for extension in initial_extensions:
