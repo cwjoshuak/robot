@@ -53,7 +53,8 @@ class UrbanDictionary(commands.Cog):
                                 if not usr.bot:
                                     await r.remove(usr)
                 except asyncio.TimeoutError:
-                    await sent_msg.clear_reactions()
+                    await sent_msg.clear_reaction('⬅️')
+                    await sent_msg.clear_reaction('➡️')
         else:
             embed = discord.Embed(description=f"**{member.name}#{member.discriminator}** Couldn't find definition for that term.", colour=Colour.from_rgb(238, 38, 32))
             await ctx.message.channel.send(embed=embed)
