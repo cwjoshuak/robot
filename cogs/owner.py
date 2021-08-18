@@ -57,7 +57,7 @@ class OwnerCog(commands.Cog, name="Owner Commands", command_attrs=dict(hidden=Tr
             await ctx.send('**`SUCCESS`**')
 
     @commands.command(name='decode')
-    @commands.is_owner()
+    @commands.has_role('Mod')
     async def decode_fernet(self, ctx, *, user_id: str):
         try:
             print(str.encode(user_id))
